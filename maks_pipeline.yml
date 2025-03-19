@@ -1,0 +1,40 @@
+stages:
+  - cleanup
+  - login
+  - build
+  - deploy
+
+remove_docker_images:
+  stage: cleanup
+  tags:
+    - linux
+  script:
+    - docker stop $(docker ps -aq)  true
+    - docker rm $(docker ps -aq)  true
+    - docker rmi $(docker images -q) || true
+
+login_docker_hub:
+  stage: login
+  tags:
+    - linux
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  variables:
+    DOCKER_USERNAME: "makkksimka"
+    DOCKER_PASSWORD: "159753max"
+
+build_push:
+  stage: build
+  tags:
+    - linux
+  script:
+    - docker build -t app:latest .
+    - docker tag app:latest makkksimka/8variant:latest
+    - docker push makkksimka/8variant:latest
+
+deploy:
+  stage: deploy
+  tags:
+    - linux
+  script:
+    - docker run -d -p 8080:80 makkksimka/8variant:latest
