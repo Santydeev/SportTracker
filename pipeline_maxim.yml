@@ -1,0 +1,41 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  IMAGE_NAME: makkksimka/myapp
+  IMAGE_TAG: latest
+
+test_app:
+  stage: test
+  tags:
+    - docker
+  script:
+    - echo "Выполнение тестов..."
+    - echo "Все тесты прошли успешно"
+  only:
+    - master
+
+build_app:
+  stage: build
+  tags:
+    - docker
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+  only:
+    - master
+
+deploy_app:
+  stage: deploy
+  tags:
+    - docker
+  script:
+    - docker stop myapp  true
+    - docker rm myapp  true
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
+    - docker run -d -p 9090:80 --name myapp $IMAGE_NAME:$IMAGE_TAG
+  only:
+    - master
