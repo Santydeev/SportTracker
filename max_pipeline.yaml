@@ -1,1 +1,23 @@
+stages:
+  - build
+  - deploy
 
+variables:
+  IMAGE_NAME: makkksiimka123/pppp
+  IMAGE_TAG: latest
+  CONTAINER_NAME: myapp
+
+build_app:
+  stage: build
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+deploy_app:
+  stage: deploy
+  script:
+    - docker stop $CONTAINER_NAME  true
+    - docker rm $CONTAINER_NAME  true
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
+    - docker run -d -p 3030:80 --name $CONTAINER_NAME $IMAGE_NAME:$IMAGE_TAG
